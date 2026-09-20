@@ -1,0 +1,24 @@
+# Python and local test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Generated installer helper/build output
+installer/build/
+tests/*.exe
+
+# Local Allegro smoke-test output
+*_smoke_result.txt
+*.log
+
+# Original Mooretronics font is not redistributed; generated SKILL glyph data
+# and BMP assets are already included in the repository.
+资源/Mooretronics.ttf
+
+# Local editor/OS files
+.git-local/
+.vs/
+.vscode/
+*.user
+Thumbs.db
+desktop.ini
