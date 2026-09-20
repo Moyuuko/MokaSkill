@@ -24,16 +24,16 @@ Skip the final deletion confirmation. This does not change category selection.
 Delete the saved selection and exit.
 
 .EXAMPLE
-.\Clean-AllegroProject.ps1
+.\scripts\Clean-AllegroProject.ps1
 
 .EXAMPLE
-.\Clean-AllegroProject.ps1 -Preview
+.\scripts\Clean-AllegroProject.ps1 -Preview
 
 .EXAMPLE
-.\Clean-AllegroProject.ps1 -Reconfigure
+.\scripts\Clean-AllegroProject.ps1 -Reconfigure
 
 .EXAMPLE
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Clean-AllegroProject.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Clean-AllegroProject.ps1
 #>
 
 [CmdletBinding()]
