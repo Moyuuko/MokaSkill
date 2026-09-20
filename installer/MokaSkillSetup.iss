@@ -36,20 +36,20 @@ Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "..\moka_loader.il"; DestDir: "{app}"; DestName: "moka_loader.il"; Flags: ignoreversion; Check: UseChineseMenu
-Source: "..\moka_loader_en.il"; DestDir: "{app}"; DestName: "moka_loader.il"; Flags: ignoreversion; Check: UseEnglishMenu
-Source: "..\moka_core.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\align_tools.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\spread_between_clines.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\pin_swap.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\dp_antipad.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\moka_copper_corner.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\stackup_impedance.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\allegro_cleanup.il"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\mooretronics-symbols\mooretronics_symbols.il"; DestDir: "{app}\mooretronics-symbols"; Flags: ignoreversion
-Source: "..\mooretronics-symbols\mooretronics_glyphs.il"; DestDir: "{app}\mooretronics-symbols"; Flags: ignoreversion
-Source: "..\mooretronics-symbols\icons\*.bmp"; DestDir: "{app}\mooretronics-symbols\icons"; Flags: ignoreversion
-Source: "..\MokaStackupBridge.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\moka_loader.il"; DestDir: "{app}"; DestName: "moka_loader.il"; Flags: ignoreversion; Check: UseChineseMenu
+Source: "..\src\moka_loader_en.il"; DestDir: "{app}"; DestName: "moka_loader.il"; Flags: ignoreversion; Check: UseEnglishMenu
+Source: "..\src\moka_core.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\align_tools.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\spread_between_clines.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\pin_swap.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\dp_antipad.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\moka_copper_corner.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\stackup_impedance.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\allegro_cleanup.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\pcb-symbols\mooretronics_symbols.il"; DestDir: "{app}\mooretronics-symbols"; Flags: ignoreversion
+Source: "..\src\pcb-symbols\mooretronics_glyphs.il"; DestDir: "{app}\mooretronics-symbols"; Flags: ignoreversion
+Source: "..\src\pcb-symbols\icons\*.bmp"; DestDir: "{app}\mooretronics-symbols\icons"; Flags: ignoreversion
+Source: "..\src\runtime\MokaStackupBridge.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\MokaSkillConfig.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]

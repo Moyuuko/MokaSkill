@@ -11,7 +11,7 @@ from PIL import Image
 
 PLUGIN_DIR = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = PLUGIN_DIR / "tools" / "generate_glyph_data.py"
-FONT_PATH = PLUGIN_DIR.parent / "资源" / "Mooretronics.ttf"
+FONT_PATH = PLUGIN_DIR.parents[1] / "assets" / "source-font" / "Mooretronics.ttf"
 ICON_DIR = PLUGIN_DIR / "icons"
 
 

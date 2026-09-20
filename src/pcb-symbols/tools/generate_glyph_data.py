@@ -365,7 +365,7 @@ def write_icon_buttons(output_dir: Path, font_path: Path) -> None:
 def main() -> int:
     script_dir = Path(__file__).resolve().parent
     plugin_dir = script_dir.parent
-    default_font = plugin_dir.parent / "资源" / "Mooretronics.ttf"
+    default_font = plugin_dir.parents[1] / "assets" / "source-font" / "Mooretronics.ttf"
     parser = argparse.ArgumentParser()
     parser.add_argument("--font", type=Path, default=default_font)
     parser.add_argument("--output", type=Path, default=plugin_dir / "mooretronics_glyphs.il")

@@ -7,7 +7,7 @@
 let((result)
     result = errset(
         progn(
-            load("moka_copper_corner.il")
+            load("src/moka_copper_corner.il")
             load("copper-corner-tools/tests/geometry_test.il")
             cct_test_assert(
                 isCallable('cct_cmd_quick_copper)

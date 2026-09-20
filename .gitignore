@@ -11,9 +11,9 @@ tests/*.exe
 *_smoke_result.txt
 *.log
 
-# Original Mooretronics font is not redistributed; generated SKILL glyph data
-# and BMP assets are already included in the repository.
-资源/Mooretronics.ttf
+# Source font is not redistributed; generated SKILL glyph data and BMP assets
+# are already included in the repository.
+assets/source-font/Mooretronics.ttf
 
 # Local editor/OS files
 .git-local/
