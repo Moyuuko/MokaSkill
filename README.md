@@ -1,26 +1,26 @@
 # MokaSkill v1.0
 
-MokaSkill 是面向 Cadence Allegro 16.6/17.4 的 SKILL 工具集合，目标是把常用的层管理、布局整理、走线辅助、覆铜、阻抗管理和项目维护操作集中到一个可安装、可卸载的工具中。
+MokaSkill 是 Allegro的 SKILL 工具。
 
-所有运行时功能都以明文 `.il` 提供，不加密、不生成 `.ile`，便于审阅、调试和按项目需要扩展。
+用以辅助PCB设计。
 
 ## 功能总览
 
 | 功能 | 命令 | 说明 | 快捷键 |
 | --- | --- | --- | --- |
-| 层设置与显示 | `mokaskill` | 单层/全层显示、层切换、Via 显示、线宽切换、Place Bound 和 Anti Etch 设置 | — |
-| 对齐与分布 | `moka_align` | 拖动对齐、左/右/上/下对齐、水平/垂直居中、等间距和吸附网格 | — |
-| 走线等间距 | `moka_spread_between_clines` | 选择平行 Cline，在保持两侧边界的情况下重新分配中间间距 | — |
-| Pin Swap | `moka_pin_swap` | Pin 交换、Pin Map 导入和交换辅助操作 | — |
-| Anti-Pad | `moka_dp_antipad` | 差分对和过孔相关的 Anti-Pad 设置工具 | — |
-| 覆铜工具 | `moka_copper_corner` | 选择铜皮并进行倒角/圆角处理，倒角尺寸会根据几何范围自动约束 | — |
-| 一键动态覆铜 | `moka_quick_copper` | 启用后左键拖动矩形范围，自动创建带自适应倒角的动态铜皮 | `Shift+D` |
-| Stackup / Impedance | `moka_stackup_impedance` | Stackup 与阻抗计算面板，支持工程数据导出和导入校验 | — |
-| PCB 标准标识 | `moka_symbols`、`moka_symbols_place` | 图标面板、层类别/子类选择、旋转/镜像/反相和连续放置 | — |
-| 项目日志清理 | `moka_clean_logs` | 按类别预览和清理日志、临时文件、缓存和锁文件 | — |
-| Trace 分析与信息 | `moka_ta`、`moka_info` | 打开 Trace Analyzer 和查看当前 PCB 信息 | — |
+| 层设置与显示 | `mokaskill` | 单层/多层显示、快速的层切换、 | — |
+| 对齐与分布 | `moka_align` | 拖动对齐、左/右/上/下对齐、水平/垂直居中、等间距和对齐栅格 | — |
+| 走线等间距 | `moka_spread_between_clines` | 选择走线，在保持最外侧的情况下均匀分布间距 | — |
+| Pin Swap | `moka_pin_swap` | 换Pin、Pin Map 导入导出 | — |
+| Anti-Pad | `moka_dp_antipad` | 差分对和过孔相关的反焊盘设置工具 | — |
+| 覆铜工具 | `moka_copper_corner` | 选择铜皮并进行倒角/圆角处 | — |
+| 一键动态覆铜 | `moka_quick_copper` | 快速创建铜皮 | `Shift+D` |
+| Stackup / Impedance | `moka_stackup_impedance` | 层叠与阻抗面板，支持工程数据导出和导入校验 | — |
+| PCB 标识 | `moka_symbols`、`moka_symbols_place` | 常见的PCB丝印标识一键放置 | — |
+| 项目日志清理 | `moka_clean_logs` | 清理日志、临时文件 | — |
+| 走线分析与信息 | `moka_ta` | 可识别目标层的走线线宽并高亮与跳转 | — |
 
-兼容命令 `mts_symbols`、`mts_place`、`cct`、`mcopper` 等仍保留。顶层菜单可以选择中文或英文，选择英文时只切换菜单栏，功能面板仍使用中文。
+顶层菜单可以选择中文或英文。
 
 ## 安装与卸载
 
