@@ -1,6 +1,6 @@
 #define AppName "Moka Skill"
-#define AppVersion "1.0.0"
-#define AppDisplayVersion "v1.0"
+#define AppVersion "1.1.0"
+#define AppDisplayVersion "v1.1"
 #define AppPublisher "Moka Skill"
 
 [Setup]

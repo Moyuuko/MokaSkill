@@ -1,5 +1,5 @@
 /*
-  Moka Skill Pin Swap Module v1.0
+  Moka Skill Pin Swap Module v1.1
 
   Commands:
     moka_pin_swap          - open the Moka Pin Swap control panel
@@ -31,7 +31,7 @@ _fsp_pinmap_finished = nil
 _fsp_pinmap_cancelled = nil
 _fsp_pinmap_highlights = nil
 _fsp_export_net_colors = nil
-_fsp_version = "1.0"
+_fsp_version = "1.1"
 _fsp_panel_active = nil
 _fsp_panel_action = nil
 _fsp_ui_ministatus = nil

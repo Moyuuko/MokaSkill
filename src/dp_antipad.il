@@ -1,5 +1,5 @@
 /*
-  Moka Skill Anti-Pad Module v1.0
+  Moka Skill Anti-Pad Module v1.1
 
   Commands:
     moka_dp_antipad      - open the anti-pad control panel
@@ -11,7 +11,7 @@
   conductive shapes while allowing clines and vias through the area.
 */
 
-_dva_version = "1.0"
+_dva_version = "1.1"
 _dva_prop_name = "MOKA_AP_KEEP_ID"
 _dva_legacy_prop_name = "MOKA_DP_AP_ID"
 _dva_defaults_initialized = nil
@@ -136,7 +136,9 @@ defun( dva_normalize_etch_layer (layer)
         normalized = nil
         when(stringp(layer) && strlen(layer) > 0
             if(rexMatchp("^ETCH/" upperCase(layer)) then
-                normalized = layer
+                when(member(substring(layer 6) dva_board_layers())
+                    normalized = strcat("ETCH/" substring(layer 6))
+                )
             else
                 when(member(layer dva_board_layers())
                     normalized = strcat("ETCH/" layer)
@@ -159,11 +161,25 @@ defun( dva_active_etch_layer ()
 )
 
 defun( dva_contour_source_layer ()
-    let((layer)
+    let((layer layers)
         layer = dva_normalize_etch_layer(_dva_source_layer)
         unless(layer layer = dva_active_etch_layer())
-        unless(layer layer = strcat("ETCH/" _dva_layer))
+        unless(layer layer = dva_normalize_etch_layer(_dva_layer))
+        unless(layer
+            layers = dva_board_layers()
+            when(layers layer = strcat("ETCH/" car(layers)))
+        )
         layer
+    )
+)
+
+defun( dva_pad_source_layer ()
+    ; ALL is a Keepout destination, not an ETCH layer. Use the selection
+    ; session's reference layer for Padstack geometry when placing on ALL.
+    if(_dva_layer == "ALL" then
+        dva_contour_source_layer()
+    else
+        strcat("ETCH/" _dva_layer)
     )
 )
 
@@ -513,7 +529,7 @@ defun( dva_object_polygons_typed (object pad_type)
         result = nil
         when(object
             if(object->objType == "via" || object->objType == "pin" then
-                pad_layer = strcat("ETCH/" _dva_layer)
+                pad_layer = dva_pad_source_layer()
                 when(pad_type == 'REGULAR && _dva_geometry_mode == "CONTOUR"
                     pad_layer = dva_contour_source_layer()
                 )
@@ -1594,7 +1610,7 @@ defun( dva_validate_params ()
         layers = dva_board_layers()
         cond(
             (!layers error_message = "The drawing has no ETCH layer stack.")
-            (!member(_dva_layer layers) error_message = "The selected placement layer is invalid.")
+            (_dva_layer != "ALL" && !member(_dva_layer layers) error_message = "The selected placement layer is invalid.")
             (_dva_clearance < 0.0 error_message = "Clearance cannot be negative.")
             (_dva_min_diameter < 0.0 error_message = "Minimum diameter cannot be negative.")
             (_dva_target_mode == "DIFF_AUTO" && _dva_max_pair_distance <= 0.0 error_message = "Maximum pair distance must be greater than zero.")
@@ -1706,8 +1722,11 @@ defun( dva_ui_start (form operation)
                 dva_ui_set_status(error_message)
             else
                 _dva_operation = operation
-                when(operation == "APPLY" && _dva_geometry_mode == "CONTOUR"
-                    _dva_source_layer = dva_active_etch_layer()
+                when(operation == "APPLY"
+                    _dva_source_layer = nil
+                    when(_dva_geometry_mode == "CONTOUR" || _dva_layer == "ALL"
+                        _dva_source_layer = dva_contour_source_layer()
+                    )
                 )
                 dva_ui_set_status(if(operation == "REMOVE" then "Select tagged sources or Moka Route Keepouts." else "Select source objects for the configured anti-pad mode."))
                 if(_dva_panel_active then
@@ -1815,7 +1834,7 @@ defun( dva_ui_build_popups (form layers)
             list("\315\326\324\262\320\316" "CAPSULE")
             list("\276\330\320\316" "RECTANGLE")
         )
-        layer_popup = nil
+        layer_popup = list(list("All" "ALL"))
         foreach(layer layers
             layer_popup = append(layer_popup list(list(layer layer)))
         )
@@ -1826,7 +1845,7 @@ defun( dva_ui_build_popups (form layers)
 )
 
 defun( dva_ui_initialize_fields (form layers)
-    unless(stringp(_dva_layer) && member(_dva_layer layers)
+    unless(stringp(_dva_layer) && (_dva_layer == "ALL" || member(_dva_layer layers))
         _dva_layer = car(layers)
     )
     axlFormSetField(form "target_mode" _dva_target_mode)

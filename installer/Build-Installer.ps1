@@ -49,6 +49,8 @@ Write-Host 'Building modern installer...'
 & $iscc $setupScript
 if ($LASTEXITCODE -ne 0) { throw 'Inno Setup 编译失败。' }
 
-$installer = Join-Path $outputDir 'MokaSkill_Setup_v1.0.exe'
+$versionMatch = [regex]::Match((Get-Content -LiteralPath $setupScript -Raw), '(?m)^#define AppDisplayVersion "([^"]+)"')
+if (-not $versionMatch.Success) { throw '安装脚本缺少 AppDisplayVersion。' }
+$installer = Join-Path $outputDir ("MokaSkill_Setup_{0}.exe" -f $versionMatch.Groups[1].Value)
 if (-not (Test-Path -LiteralPath $installer)) { throw "未生成安装程序：$installer" }
 Write-Host "Done: $installer"

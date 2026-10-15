@@ -1,5 +1,5 @@
 /*
- * Moka Skill Copper Corner Tools v1.0
+ * Moka Skill Copper Corner Tools v1.1
  *
  * Standalone Cadence Allegro SKILL plugin for applying a uniform chamfer or
  * fillet to automatically detected convex corners of selected copper shapes.
@@ -10,7 +10,7 @@
  *   moka_quick_copper        Draw a chamfered rectangular copper shape.
  */
 
-defvar(_cct_version "1.0")
+defvar(_cct_version "1.1")
 defvar(_cct_form nil)
 defvar(_cct_mode "CHAMFER")
 defvar(_cct_corner_scope "OUTER")
@@ -26,7 +26,7 @@ defvar(_cct_session_corners 0)
 defvar(_cct_session_failed 0)
 
 /* Reloading an older version in the same Allegro session must expose the Moka mode. */
-_cct_version = "1.0"
+_cct_version = "1.1"
 _cct_mode = "CHAMFER"
 
 defun( cct_is_chinese_ui ()

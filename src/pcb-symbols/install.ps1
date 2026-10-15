@@ -32,6 +32,6 @@ $content = $content.TrimEnd() + [Environment]::NewLine + [Environment]::NewLine 
 
 Set-Content -LiteralPath $ilinitPath -Value $content -Encoding Default
 
-Write-Host "Moka skill - PCB 标识放置 v1.0 installed from: $pluginDir"
+Write-Host "Moka skill - PCB 标识放置 v1.1 installed from: $pluginDir"
 Write-Host "Updated Allegro startup file: $ilinitPath"
 Write-Host 'Restart Allegro, then run: mts_symbols'

@@ -1,6 +1,6 @@
 ; ==============================================================================
 ; Script Name: moka_core.il
-; Description: Moka skill v1.0 (routing helpers, stackup, impedance and analysis tools)
+; Description: Moka skill v1.1 (routing helpers, stackup, impedance and analysis tools)
 ; Modifications: Version 1.0 - Add Anti Etch layer visibility settings
 ; ==============================================================================
 
@@ -649,7 +649,7 @@ defun( moka_create_form_file ()
             if(form_h < 30 then form_h = 30)
             
             fprintf(port "FILE_TYPE=FORM_DEFN VERSION=2\n")
-            fprintf(port "FORM\nFIXED\nPORT 115 %d\nHEADER \"Moka skill v1.0 - \262\343\311\350\326\303\"\n" form_h)
+            fprintf(port "FORM\nFIXED\nPORT 115 %d\nHEADER \"Moka skill v1.1 - \262\343\311\350\326\303\"\n" form_h)
             fprintf(port "POPUP <C1CLASSPOP> \"(None)\" \"\".\n")
             fprintf(port "POPUP <C1SUBPOP> \"(None)\" \"\".\n")
             fprintf(port "POPUP <C2CLASSPOP> \"(None)\" \"\".\n")
@@ -1299,7 +1299,7 @@ defun( moka_refdes_create_form_file ()
         if(port then
             fprintf(port "FILE_TYPE=FORM_DEFN VERSION=2\n")
             fprintf(port "FORM\nFIXED\nPORT 32 32\n")
-            fprintf(port "HEADER \"Moka skill v1.0 - \316\273\272\305\271\244\276\337\"\n")
+            fprintf(port "HEADER \"Moka skill v1.1 - \316\273\272\305\271\244\276\337\"\n")
             fprintf(port "TILE\n")
             fprintf(port "GROUP \"\317\324\312\276\311\350\326\303\"\nGLOC 1 1\nGSIZE 29 11\nENDGROUP\n")
             fprintf(port "FIELD show_top\nFLOC 2 3\nMENUBUTTON \"\317\324\312\276\266\245\262\343\" 12 3\nENDFIELD\n")
@@ -1691,7 +1691,7 @@ defun( moka_cmd_get_status ()
 
         axlMsgPut("-------------------------------------------------")
         ; 设计状态数据:
-        axlMsgPut("Moka Skill v1.0 \311\350\274\306\327\264\314\254\312\375\276\335:")
+        axlMsgPut("Moka Skill v1.1 \311\350\274\306\327\264\314\254\312\375\276\335:")
         ; 总管脚数
         axlMsgPut("\327\334\271\334\275\305\312\375            : %d" pin_count)
         ; 剩余未连接飞线数
@@ -1701,7 +1701,7 @@ defun( moka_cmd_get_status ()
         axlMsgPut("-------------------------------------------------")
 
         ; PCB 设计状态: 总管脚数: 剩余飞线数: 今日总耗时:
-        axlUIConfirm(sprintf(nil "Moka Skill v1.0 PCB \311\350\274\306\327\264\314\254:\n\n> \327\334\271\334\275\305\312\375: %d\n> \312\243\323\340\267\311\317\337\312\375: %d\n> \275\361\310\325\327\334\272\304\312\261: %s" pin_count rats_count time_str))
+        axlUIConfirm(sprintf(nil "Moka Skill v1.1 PCB \311\350\274\306\327\264\314\254:\n\n> \327\334\271\334\275\305\312\375: %d\n> \312\243\323\340\267\311\317\337\312\375: %d\n> \275\361\310\325\327\334\272\304\312\261: %s" pin_count rats_count time_str))
     )
 )
 
@@ -1720,7 +1720,7 @@ defun( Create_TA_Main_Form ()
         fprintf(outPort "FIXED\n")
         fprintf(outPort "PORT 48 30\n") 
         ; 走线分析器
-        fprintf(outPort "HEADER \"Moka skill v1.0 - \327\337\317\337\267\326\316\366\306\367\"\n")
+        fprintf(outPort "HEADER \"Moka skill v1.1 - \327\337\317\337\267\326\316\366\306\367\"\n")
         fprintf(outPort "TILE\n")
     
         ; 控制面板
@@ -1795,7 +1795,7 @@ defun( Create_TA_Palette_Form ()
         fprintf(outPort "FIXED\n")
         fprintf(outPort "PORT 70 20\n") 
         ; 调色板
-        fprintf(outPort "HEADER \"Moka skill v1.0 - \265\367\311\253\260\345\"\n")
+        fprintf(outPort "HEADER \"Moka skill v1.1 - \265\367\311\253\260\345\"\n")
   
         fprintf(outPort "TILE\n")
         

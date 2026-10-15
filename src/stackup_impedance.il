@@ -1,5 +1,5 @@
 /*
-  Moka Skill Stackup / Impedance Module v1.0
+  Moka Skill Stackup / Impedance Module v1.1
 
   Commands:
     moka_stackup_impedance - open the control panel
@@ -7,7 +7,7 @@
     moka_stackup_import    - validate and import workbook sections
 */
 
-_msi_version = "1.0"
+_msi_version = "1.1"
 _msi_form = nil
 _msi_busy = nil
 _msi_status = "\277\325\317\320"

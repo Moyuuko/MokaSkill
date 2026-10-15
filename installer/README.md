@@ -16,7 +16,7 @@
    .\installer\Build-Installer.ps1
    ```
 
-3. 输出文件位于 `dist\MokaSkill_Setup_v1.0.exe`。
+3. 输出文件位于 `dist\MokaSkill_Setup_v1.1.exe`。
 
 构建脚本会先编译 `MokaSkillConfig.exe` 并执行自检，再编译安装包。自检会验证重复安装的幂等性、卸载回滚和用户 Allegro 配置保留。
 
