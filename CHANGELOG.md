@@ -8,6 +8,7 @@
 - Anti-Pad 批量完成后安全结束交互状态，避免切层命令与数据库事务同时运行。
 - 不再用 Moka 图标目录覆盖 Allegro 全局 BMPPATH，保留原生功能栏图标和间距。
 - 层设置新增独立 `DRC ALL` 选项，用于显示 `DRC ERROR CLASS/ALL`，不再把全局 DRC 误认为各层 DRC 的简单汇总。
+- 修复 `DRC ALL` 开启时未按 `DRC ERROR CLASS/ALL` 子类颜色显示、关闭后不清除颜色的问题。
 
 ## v1.2（待测试，未发布）
 

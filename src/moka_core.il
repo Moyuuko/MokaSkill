@@ -839,6 +839,22 @@ defun( moka_update_cell_color (form field_prefix i layer state)
     )
 )
 
+defun( moka_update_drc_all_color (form)
+    let((color_idx)
+        color_idx = if(moka_drc_all then
+            moka_get_color_safe("DRC ERROR CLASS" "ALL")
+        else
+            0
+        )
+        errset(axlFormSetField(form "drc_all" color_idx))
+    )
+)
+
+defun( moka_toggle_drc_all (form)
+    moka_drc_all = if(moka_drc_all then nil else t)
+    moka_update_drc_all_color(form)
+)
+
 defun( moka_refresh_custom_column (form field_prefix col_idx)
     let((row layer)
         for(i 0 length(moka_layer_table)-1
@@ -1519,7 +1535,7 @@ defun( moka_cmd_ui ()
                         )
                     )
                 )
-                errset(axlFormSetField(form "drc_all" moka_drc_all) nil)
+                moka_update_drc_all_color(form)
                 
                 axlFormDisplay(form)  
                 deleteFile(formFile)
@@ -1561,8 +1577,7 @@ defun( moka_form_cb (form)
         ("btn_ibom" axlShellPost("moka_ibom_config"))
 
         ("drc_all"
-            moka_drc_all = if(axlFormGetField(form "drc_all") then t else nil)
-            errset(axlFormSetField(form "drc_all" moka_drc_all) nil)
+            moka_toggle_drc_all(form)
         )
         
         (t

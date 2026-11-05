@@ -30,7 +30,7 @@ MokaSkill 是 Allegro的 SKILL 工具。
 
 顶层菜单可以选择中文或英文，功能面板保持中文。
 
-层设置中的 `DRC` 控制当前 ETCH 层的 `DRC ERROR CLASS/<层>`；单独的 `DRC ALL` 控制 `DRC ERROR CLASS/ALL`，用于显示等长、相位及其他全局约束 DRC。两者互不联动，旧配置升级后 `DRC ALL` 默认开启。
+层设置中的 `DRC` 控制当前 ETCH 层的 `DRC ERROR CLASS/<层>`；单独的 `DRC ALL` 控制 `DRC ERROR CLASS/ALL`，用于显示等长、相位及其他全局约束 DRC。两者互不联动，旧配置升级后 `DRC ALL` 默认开启，开关颜色跟随该全局 DRC 子类的颜色。
 
 交互式 BOM 已合并进 MokaSkill 主模块，并随 v1.3.1 安装器打包。它使用 Allegro SKILL 采集板数据，将 InteractiveHtmlBom v2.12.0 的中文界面和查看器内嵌到单个离线 HTML。运行时不需要安装 Python 或外部 InteractiveHtmlBom，也不生成中间 JSON 文件。从 Moka Skill 菜单或 `mokaskill` 主面板打开配置窗口并点击“导出”，即可保存配置并生成 HTML；也可使用 `moka_ibom` 直接导出或 `moka_ibom_config` 打开设置。设置会嵌入导出文件并优先于浏览器旧的 localStorage 配置。该功能尚未完成 Allegro 16.6/17.4 实板验证，数据采集和上游功能兼容性仍需测试。导出文件位于当前工程目录的 `ibom` 文件夹。
 
