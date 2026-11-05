@@ -1,6 +1,6 @@
 ; ==============================================================================
 ; Script Name: moka_core.il
-; Description: Moka skill v1.1 (routing helpers, stackup, impedance and analysis tools)
+; Description: Moka skill v1.3.0 (routing helpers, stackup, impedance and analysis tools)
 ; Modifications: Version 1.0 - Add Anti Etch layer visibility settings
 ; ==============================================================================
 
@@ -9,6 +9,7 @@ defvar(moka_install_dir axlGetVariable("MOKA_INSTALL_DIR") || "D:/Moka_Skill")
 ; Moka Globals
 defvar(moka_layer_table nil)
 defvar(moka_display_mode "SINGLE") 
+defvar(_moka_view_updating nil)
 defvar(moka_c1_class "")
 defvar(moka_c1_sub "")
 defvar(moka_c2_class "")
@@ -410,12 +411,13 @@ defun( moka_sync_table ()
 )
 
 defun( moka_cycle_layer (direction)
-    if(moka_refdes_active then
-        moka_refdes_cycle_side(direction)
-    else
-        progn(
-            moka_sync_table()
-            let((layers active_layer curr_idx target_idx found layers_num count)
+    when(moka_layer_change_allowed()
+        if(moka_refdes_active then
+            moka_refdes_cycle_side(direction)
+        else
+            progn(
+                moka_sync_table()
+                let((layers active_layer curr_idx target_idx found layers_num count)
                 layers = axlGetParam("paramLayerGroup:ETCH")->groupMembers
                 layers_num = length(layers)
                 active_layer = nthelem(2 parseString(axlGetActiveLayer() "/"))
@@ -441,6 +443,7 @@ defun( moka_cycle_layer (direction)
                 ; No other enabled layer was found.
                 else axlMsgPut("Moka skill: \316\264\325\322\265\275\306\344\313\373\322\321\306\364\323\303\265\304\262\343\241\243")
                 )
+                )
             )
         )
     )
@@ -449,7 +452,28 @@ defun( moka_cycle_layer (direction)
 defun( moka_cmd_prev () moka_cycle_layer("prev"))
 defun( moka_cmd_next () moka_cycle_layer("next"))
 
+defun( moka_layer_change_allowed ()
+    cond(
+        (_moka_view_updating nil)
+        (((boundp('_dva_mark) && _dva_mark) ||
+          (boundp('_dva_run_active) && _dva_run_active))
+            axlMsgPut("Moka skill: Finish or cancel the Anti-Pad operation before switching layers.")
+            nil
+        )
+        (t t)
+    )
+)
+
 defun( moka_toggle_single_all ()
+    when(moka_layer_change_allowed()
+        let((_moka_view_updating)
+            _moka_view_updating = t
+            moka_toggle_single_all_impl()
+        )
+    )
+)
+
+defun( moka_toggle_single_all_impl ()
     moka_sync_table()
     if(equal(moka_display_mode "SINGLE") then
         moka_display_mode = "ALL"
@@ -531,7 +555,7 @@ defun( moka_toggle_single_all ()
             
             if(saved_layer && axlIsLayer(saved_layer) then axlSetActiveLayer(saved_layer))
             
-            axlVisibleUpdate(t)
+            axlVisibleUpdate(nil)
             ; 多层显示切换 (当前显示 %d 层)
             axlMsgPut("Moka skill: \266\340\262\343\317\324\312\276\307\320\273\273 (\265\261\307\260\317\324\312\276 %d \262\343)" count)
         )
@@ -540,12 +564,21 @@ defun( moka_toggle_single_all ()
             active_layer = nthelem(2 parseString(axlGetActiveLayer() "/"))
             foreach(cfg moka_layer_table if(equal(nth(0 cfg) active_layer) then curr_cfg = cfg))
             ; 无法识别当前活动层。
-            if(curr_cfg then moka_apply_view(curr_cfg) else axlMsgPut("Moka skill: \316\336\267\250\312\266\261\360\265\261\307\260\273\356\266\257\262\343\241\243"))
+            if(curr_cfg then moka_apply_view_impl(curr_cfg) else axlMsgPut("Moka skill: \316\336\267\250\312\266\261\360\265\261\307\260\273\356\266\257\262\343\241\243"))
         )
     )
 )
 
 defun( moka_apply_view (cfg)
+    when(moka_layer_change_allowed()
+        let((_moka_view_updating)
+            _moka_view_updating = t
+            moka_apply_view_impl(cfg)
+        )
+    )
+)
+
+defun( moka_apply_view_impl (cfg)
     moka_display_mode = "SINGLE" 
     let((ln pin via drc mst msb slkt slkb reft refb bndt bndb rki rko c1 c2 bound anti c1_layer c2_layer)
         ln = nth(0 cfg) pin = nth(2 cfg) via = nth(3 cfg) drc = nth(4 cfg)
@@ -616,7 +649,7 @@ defun( moka_apply_view (cfg)
         if(axlIsLayer("BOARD GEOMETRY/DESIGN_OUTLINE") then axlVisibleLayer("BOARD GEOMETRY/DESIGN_OUTLINE" t))
         
         axlSetActiveLayer(strcat("ETCH/" ln))
-        axlVisibleUpdate(t)
+        axlVisibleUpdate(nil)
         ; 单层显示 ->
         axlMsgPut("Moka skill: \265\245\262\343\317\324\312\276 -> %s" ln)
     )
@@ -649,7 +682,7 @@ defun( moka_create_form_file ()
             if(form_h < 30 then form_h = 30)
             
             fprintf(port "FILE_TYPE=FORM_DEFN VERSION=2\n")
-            fprintf(port "FORM\nFIXED\nPORT 115 %d\nHEADER \"Moka skill v1.1 - \262\343\311\350\326\303\"\n" form_h)
+            fprintf(port "FORM\nFIXED\nPORT 130 %d\nHEADER \"Moka skill v1.3.0 - \262\343\311\350\326\303\"\n" form_h)
             fprintf(port "POPUP <C1CLASSPOP> \"(None)\" \"\".\n")
             fprintf(port "POPUP <C1SUBPOP> \"(None)\" \"\".\n")
             fprintf(port "POPUP <C2CLASSPOP> \"(None)\" \"\".\n")
@@ -741,6 +774,7 @@ defun( moka_create_form_file ()
             fprintf(port "FIELD btn_pin_swap\nFLOC 52 %d\nMENUBUTTON \"\273\273 Pin\" 12 3\nENDFIELD\n" y)
             fprintf(port "FIELD btn_dp_antipad\nFLOC 66 %d\nMENUBUTTON \"Anti-Pad\" 16 3\nENDFIELD\n" y)
             fprintf(port "FIELD btn_refdes\nFLOC 84 %d\nMENUBUTTON \"\316\273\272\305\271\244\276\337\" 14 3\nENDFIELD\n" y)
+            fprintf(port "FIELD btn_ibom\nFLOC 100 %d\nMENUBUTTON \"\275\273\273\245\312\275BOM\" 16 3\nENDFIELD\n" y)
             fprintf(port "ENDTILE\nENDFORM\n")
             close(port)
             
@@ -1299,7 +1333,7 @@ defun( moka_refdes_create_form_file ()
         if(port then
             fprintf(port "FILE_TYPE=FORM_DEFN VERSION=2\n")
             fprintf(port "FORM\nFIXED\nPORT 32 32\n")
-            fprintf(port "HEADER \"Moka skill v1.1 - \316\273\272\305\271\244\276\337\"\n")
+            fprintf(port "HEADER \"Moka skill v1.3.0 - \316\273\272\305\271\244\276\337\"\n")
             fprintf(port "TILE\n")
             fprintf(port "GROUP \"\317\324\312\276\311\350\326\303\"\nGLOC 1 1\nGSIZE 29 11\nENDGROUP\n")
             fprintf(port "FIELD show_top\nFLOC 2 3\nMENUBUTTON \"\317\324\312\276\266\245\262\343\" 12 3\nENDFIELD\n")
@@ -1510,6 +1544,8 @@ defun( moka_form_cb (form)
         ("btn_dp_antipad" axlShellPost("moka_dp_antipad"))
 
         ("btn_refdes" axlShellPost("moka_refdes"))
+
+        ("btn_ibom" axlShellPost("moka_ibom_config"))
         
         (t
             let((all_fields base_name field_name idx ln prefixes col_idx old_state new_state row)
@@ -1691,7 +1727,7 @@ defun( moka_cmd_get_status ()
 
         axlMsgPut("-------------------------------------------------")
         ; 设计状态数据:
-        axlMsgPut("Moka Skill v1.1 \311\350\274\306\327\264\314\254\312\375\276\335:")
+        axlMsgPut("Moka Skill v1.3.0 \311\350\274\306\327\264\314\254\312\375\276\335:")
         ; 总管脚数
         axlMsgPut("\327\334\271\334\275\305\312\375            : %d" pin_count)
         ; 剩余未连接飞线数
@@ -1701,7 +1737,7 @@ defun( moka_cmd_get_status ()
         axlMsgPut("-------------------------------------------------")
 
         ; PCB 设计状态: 总管脚数: 剩余飞线数: 今日总耗时:
-        axlUIConfirm(sprintf(nil "Moka Skill v1.1 PCB \311\350\274\306\327\264\314\254:\n\n> \327\334\271\334\275\305\312\375: %d\n> \312\243\323\340\267\311\317\337\312\375: %d\n> \275\361\310\325\327\334\272\304\312\261: %s" pin_count rats_count time_str))
+        axlUIConfirm(sprintf(nil "Moka Skill v1.3.0 PCB \311\350\274\306\327\264\314\254:\n\n> \327\334\271\334\275\305\312\375: %d\n> \312\243\323\340\267\311\317\337\312\375: %d\n> \275\361\310\325\327\334\272\304\312\261: %s" pin_count rats_count time_str))
     )
 )
 
@@ -1720,7 +1756,7 @@ defun( Create_TA_Main_Form ()
         fprintf(outPort "FIXED\n")
         fprintf(outPort "PORT 48 30\n") 
         ; 走线分析器
-        fprintf(outPort "HEADER \"Moka skill v1.1 - \327\337\317\337\267\326\316\366\306\367\"\n")
+        fprintf(outPort "HEADER \"Moka skill v1.3.0 - \327\337\317\337\267\326\316\366\306\367\"\n")
         fprintf(outPort "TILE\n")
     
         ; 控制面板
@@ -1795,7 +1831,7 @@ defun( Create_TA_Palette_Form ()
         fprintf(outPort "FIXED\n")
         fprintf(outPort "PORT 70 20\n") 
         ; 调色板
-        fprintf(outPort "HEADER \"Moka skill v1.1 - \265\367\311\253\260\345\"\n")
+        fprintf(outPort "HEADER \"Moka skill v1.3.0 - \265\367\311\253\260\345\"\n")
   
         fprintf(outPort "TILE\n")
         

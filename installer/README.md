@@ -16,7 +16,7 @@
    .\installer\Build-Installer.ps1
    ```
 
-3. 输出文件位于 `dist\MokaSkill_Setup_v1.1.exe`。
+3. 输出文件位于 `dist\MokaSkill_Setup_v1.3.0.exe`。发布版本可从 GitHub Releases 下载。
 
 构建脚本会先编译 `MokaSkillConfig.exe` 并执行自检，再编译安装包。自检会验证重复安装的幂等性、卸载回滚和用户 Allegro 配置保留。
 
@@ -26,3 +26,4 @@
 - 安装向导可选择 MokaSkill 中文或英文菜单栏；选择 English 时只切换菜单栏，各功能界面仍为中文。
 - 安装时在 `pcbenv/env` 和 `pcbenv/allegro.ilinit` 中添加带标记的配置块。
 - 卸载时只删除 Moka Skill 管理的配置块，保留其他用户配置。
+- 安装包内含 Interactive BOM Allegro 数据采集器、离线 HTML 查看器及其许可证；导出 HTML 运行时无需 Python 或其他运行依赖。

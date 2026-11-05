@@ -1,5 +1,5 @@
 /*
- * Moka skill - PCB 标识放置 v1.1
+ * Moka skill - PCB 标识放置 v1.3.0
  *
  * Places PCB marking glyphs generated from Mooretronics.ttf as ordinary
  * filled Allegro geometry.  Commands:
@@ -7,8 +7,8 @@
  *   moka_symbols_place - place the symbol using the current panel settings
  */
 
-defvar(_mts_version "1.1")
-_mts_version = "1.1"
+defvar(_mts_version "1.3.0")
+_mts_version = "1.3.0"
 defvar(_mts_install_dir "")
 defvar(_mts_form nil)
 defvar(_mts_symbol "p")
@@ -244,25 +244,26 @@ defun( mts_missing_icon ()
     )
 )
 
-/* Allegro's FORM BITMAP token expects a file name resolved through BMPPATH.
-   Register the icon folder at runtime so an installation path
-   containing spaces (for example "Moka Skill") cannot break form parsing. */
+/* Preserve Allegro's toolbar/search paths, including paths containing spaces.
+   Never substitute our directory when the original value cannot be read. */
 defun( mts_register_bitmap_path ()
     let((icon_dir get_result bitmap_paths set_result)
         icon_dir = strcat(_mts_install_dir "/icons")
         get_result = errset(axlGetVariableList("bmppath") nil)
-        bitmap_paths = if(get_result && listp(car(get_result)) then
-            car(get_result)
-        else
+        bitmap_paths = when(get_result car(get_result))
+        when(stringp(bitmap_paths) bitmap_paths = list(bitmap_paths))
+        if(!bitmap_paths || !listp(bitmap_paths) ||
+           exists(path bitmap_paths !stringp(path)) then
             nil
-        )
-        if(member(icon_dir bitmap_paths) then
-            t
         else
-            set_result = errset(
-                axlSetVariable("bmppath" cons(icon_dir bitmap_paths))
-                nil)
-            set_result && car(set_result)
+            if(member(icon_dir bitmap_paths) then
+                t
+            else
+                set_result = errset(
+                    axlSetVariable("bmppath" append(bitmap_paths list(icon_dir)))
+                    nil)
+                set_result && car(set_result)
+            )
         )
     )
 )

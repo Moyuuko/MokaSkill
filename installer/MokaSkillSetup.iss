@@ -1,6 +1,6 @@
 #define AppName "Moka Skill"
-#define AppVersion "1.1.0"
-#define AppDisplayVersion "v1.1"
+#define AppVersion "1.3.0"
+#define AppDisplayVersion "v1.3.0"
 #define AppPublisher "Moka Skill"
 
 [Setup]
@@ -45,6 +45,12 @@ Source: "..\src\pin_swap.il"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\dp_antipad.il"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\moka_copper_corner.il"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\stackup_impedance.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\moka_interactive_bom.il"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\interactive-bom\exportJson.il"; DestDir: "{app}\interactive-bom"; Flags: ignoreversion
+Source: "..\src\interactive-bom\jsonDecode.il"; DestDir: "{app}\interactive-bom"; Flags: ignoreversion
+Source: "..\src\interactive-bom\upstream_template.html"; DestDir: "{app}\interactive-bom"; Flags: ignoreversion
+Source: "..\src\interactive-bom\INTERACTIVEHTMLBOM-LICENSE"; DestDir: "{app}\interactive-bom"; Flags: ignoreversion
+Source: "..\src\interactive-bom\EXPORTJSON-LICENSE"; DestDir: "{app}\interactive-bom"; DestName: "LICENSE"; Flags: ignoreversion
 Source: "..\src\allegro_cleanup.il"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\pcb-symbols\mooretronics_symbols.il"; DestDir: "{app}\mooretronics-symbols"; Flags: ignoreversion
 Source: "..\src\pcb-symbols\mooretronics_glyphs.il"; DestDir: "{app}\mooretronics-symbols"; Flags: ignoreversion

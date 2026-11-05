@@ -1,9 +1,10 @@
 /*
-  Moka Skill Anti-Pad Module v1.1
+  Moka Skill Anti-Pad Module v1.3.0
 
   Commands:
     moka_dp_antipad      - open the anti-pad control panel
     dp_antipad           - compatibility command for the same panel
+    moka_dp_antipad_all  - apply current settings to all differential via pairs
     moka_dp_antipad_run  - internal interactive selection command
 
   The module creates filled shapes on ROUTE KEEPOUT/<selected layer> and
@@ -11,7 +12,7 @@
   conductive shapes while allowing clines and vias through the area.
 */
 
-_dva_version = "1.1"
+_dva_version = "1.3.0"
 _dva_prop_name = "MOKA_AP_KEEP_ID"
 _dva_legacy_prop_name = "MOKA_DP_AP_ID"
 _dva_defaults_initialized = nil
@@ -25,6 +26,7 @@ _dva_panel_action = nil
 _dva_ui_ministatus = nil
 
 _dva_finished = nil
+_dva_enter_wakeup = nil
 _dva_commit = nil
 _dva_mark = nil
 _dva_operation = "APPLY"
@@ -49,6 +51,11 @@ axlCmdRegister(
     ?cancelCmd 'dva_panel_cancel)
 axlCmdRegister(
     "dp_antipad" 'dva_ui_open
+    ?cmdType "interactive"
+    ?doneCmd 'dva_panel_done
+    ?cancelCmd 'dva_panel_cancel)
+axlCmdRegister(
+    "moka_dp_antipad_all" 'dva_cmd_all
     ?cmdType "interactive"
     ?doneCmd 'dva_panel_done
     ?cancelCmd 'dva_panel_cancel)
@@ -744,13 +751,30 @@ defun( dva_objects_bbox (objects)
     )
 )
 
-defun( dva_object_cover_radius (object)
-    let((box width height radius)
+defun( dva_object_base_radius (object)
+    let((box width height radius result pad pad_layer)
         box = dva_object_bbox(object)
         width = dva_bbox_width(box)
         height = dva_bbox_height(box)
         radius = sqrt(width * width + height * height) / 2.0
-        radius = radius + _dva_clearance
+        ; A circular REGULAR pad is not its square bounding box.  Measure from
+        ; the copper diameter, not from the bounding-box diagonal or drill.
+        when(object && member(object->objType list("via" "pin")) &&
+             isCallable('axlDBGetPad)
+            pad_layer = dva_pad_source_layer()
+            result = errset(axlDBGetPad(object pad_layer "REGULAR") nil)
+            pad = when(result car(result))
+            when(pad && pad->figureName == "CIRCLE" && dva_bbox_valid(pad->bBox)
+                radius = max(dva_bbox_width(pad->bBox) dva_bbox_height(pad->bBox)) / 2.0
+            )
+        )
+        radius
+    )
+)
+
+defun( dva_object_cover_radius (object)
+    let((radius)
+        radius = dva_object_base_radius(object) + _dva_clearance
         if(_dva_fixed_size && _dva_min_diameter > 0.0 then
             radius = _dva_min_diameter / 2.0
         else
@@ -957,6 +981,94 @@ defun( dva_build_auto_pairs (anchors)
     )
 )
 
+defun( dva_net_vias (net)
+    let((vias anchor)
+        vias = nil
+        foreach(anchor dva_net_anchors(net)
+            when(anchor->objType == "via" vias = cons(anchor vias))
+        )
+        reverse(vias)
+    )
+)
+
+defun( dva_member_vias (member_dbid)
+    let((vias net)
+        vias = nil
+        foreach(net dva_member_nets(member_dbid)
+            vias = append(vias dva_net_vias(net))
+        )
+        dva_unique_dbids(vias)
+    )
+)
+
+defun( dva_via_pair_candidates (left_vias right_vias)
+    let((candidates left_via right_via distance left_point right_point)
+        candidates = nil
+        foreach(left_via left_vias
+            left_point = left_via->xy
+            foreach(right_via right_vias
+                right_point = right_via->xy
+                when(left_via != right_via && left_via->net != right_via->net && left_point && right_point
+                    distance = dva_point_distance(left_point right_point)
+                    when(distance <= _dva_max_pair_distance
+                        candidates = cons(list(distance left_via right_via) candidates)
+                    )
+                )
+            )
+        )
+        sort(reverse(candidates) 'dva_via_candidate_lessp)
+    )
+)
+
+defun( dva_via_candidate_lessp (candidate1 candidate2)
+    car(candidate1) < car(candidate2)
+)
+
+defun( dva_plan_all_diff_vias ()
+    ; Read constraints once per net, and process each two-sided DIFF_PAIR once.
+    ; Old Moka IDs are deliberately not evidence of differential membership.
+    let((design net vias groups group seen left_vias right_vias candidate
+         pairs used scanned eligible)
+        design = axlDBGetDesign()
+        pairs = nil
+        seen = nil
+        used = nil
+        scanned = nil
+        eligible = nil
+        when(design
+            foreach(net design->nets
+                vias = dva_net_vias(net)
+                scanned = append(scanned vias)
+                when(vias
+                    groups = errset(axlDBGetGroupFromItem(net "DIFF_PAIR" t) nil)
+                    when(groups && car(groups)
+                        foreach(group car(groups)
+                            when(group && !member(group seen)
+                                seen = cons(group seen)
+                                when(length(group->groupMembers) == 2
+                                    left_vias = dva_member_vias(car(group->groupMembers))
+                                    right_vias = dva_member_vias(cadr(group->groupMembers))
+                                    eligible = append(eligible append(left_vias right_vias))
+                                    foreach(candidate dva_via_pair_candidates(left_vias right_vias)
+                                        unless(member(cadr(candidate) used) || member(caddr(candidate) used)
+                                            pairs = cons(list(cadr(candidate) caddr(candidate)) pairs)
+                                            used = cons(cadr(candidate) cons(caddr(candidate) used))
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        ; Result: pairs, all scanned vias, constrained vias, unmatched vias.
+        list(reverse(pairs) length(dva_unique_dbids(scanned))
+            length(dva_unique_dbids(eligible))
+            length(dva_unique_dbids(eligible)) - length(used))
+    )
+)
+
 defun( dva_poly_expansion (polygon)
     let((box width height min_dimension expansion)
         expansion = _dva_clearance
@@ -988,17 +1100,22 @@ defun( dva_expand_polygon (polygon)
 )
 
 defun( dva_create_contour_geometry (sources pair_id)
-    let((count source polygons polygon expanded output fallback_box pad_type)
+    let((count source polygons polygon expanded output fallback_box pad_type complete before_count)
         count = 0
+        complete = t
         pad_type = if(_dva_geometry_mode == "ANTIPAD" then 'ANTI else 'REGULAR)
         foreach(source sources
+            before_count = count
             polygons = dva_object_polygons_typed(source pad_type)
             if(polygons then
                 foreach(polygon polygons
                     expanded = dva_expand_polygon(polygon)
+                    unless(expanded complete = nil)
                     foreach(output expanded
-                        when(dva_create_poly_keepout(output pair_id)
+                        if(dva_create_poly_keepout(output pair_id) then
                             count = count + 1
+                        else
+                            complete = nil
                         )
                     )
                 )
@@ -1008,8 +1125,14 @@ defun( dva_create_contour_geometry (sources pair_id)
                     count = count + 1
                 )
             )
+            when(count == before_count complete = nil)
         )
-        count
+        if(_dva_operation == "BATCH" && !complete then
+            _dva_last_error = "\271\375\277\327\266\324\302\326\300\252\311\372\263\311\262\273\315\352\325\373\243\254\322\321\273\330\271\366\270\303\327\351\262\331\327\367\241\243"
+            0
+        else
+            count
+        )
     )
 )
 
@@ -1150,7 +1273,8 @@ defun( dva_create_geometry (sources grouped pair_id)
                     )
                 else
                     foreach(source sources
-                        when(dva_create_circle_for_bbox(dva_object_bbox(source) pair_id)
+                        when(dva_create_circle_keepout(dva_object_center(source)
+                                dva_object_cover_radius(source) pair_id)
                             count = count + 1
                         )
                     )
@@ -1533,14 +1657,151 @@ defun( dva_cb_oops ()
         dva_ui_set_status("No anti-pad operation is available to undo.")
     )
     axlClearSelSet()
+    ; Oops deliberately releases the current wait without ending the session.
+    _dva_enter_wakeup = t
     axlCancelEnterFun()
 )
 
-defun( dva_cmd_run ()
-    let((popup selected)
+defun( dva_session_interrupted ()
+    ; A nil enter/select result without our own callback means Escape, another
+    ; command, or a cancelled input context.  Re-entering it can spin forever.
+    _dva_finished = t
+    _dva_commit = nil
+    _dva_panel_active = nil
+    dva_ui_set_status("Selection interrupted; uncommitted anti-pad changes will be rolled back.")
+)
+
+defun( dva_batch_apply_pairs (pairs)
+    let((_dva_target_mode pair success_count skipped_count failed_count result)
+        _dva_target_mode = "DIFF_AUTO"
+        success_count = 0
+        skipped_count = 0
+        failed_count = 0
+        foreach(pair pairs
+            if(!_dva_replace_existing && dva_matching_ids(pair) then
+                skipped_count = skipped_count + 1
+            else
+                axlDBTransactionMark(_dva_mark)
+                result = errset(dva_apply_group(pair t) t)
+                if(result && car(result) && nth(1 car(result)) > 0 then
+                    success_count = success_count + 1
+                    _dva_session_op_count = _dva_session_op_count + 1
+                else
+                    unless(axlDBTransactionOops(_dva_mark)
+                        error("Anti-Pad batch pair rollback failed; aborting the entire batch.")
+                    )
+                    failed_count = failed_count + 1
+                    dva_put_msg(sprintf(nil "\271\375\277\327\266\324\264\246\300\355\312\247\260\334\243\250%s\243\251\243\254\322\321\273\330\271\366\270\303\327\351\262\331\327\367\241\243"
+                        dva_group_label(pair)))
+                )
+            )
+        )
+        list(success_count skipped_count failed_count)
+    )
+)
+
+defun( dva_cmd_run_batch ()
+    let((plan pairs approved result popup point)
         _dva_run_active = t
         _dva_finished = nil
         _dva_commit = nil
+        _dva_enter_wakeup = nil
+        _dva_session_op_count = 0
+        _dva_mark = nil
+        unwindProtect(
+            progn(
+                dva_put_msg("\325\375\324\332\311\250\303\350\310\253\260\345\262\356\267\326\266\324\271\375\277\327...")
+                plan = dva_plan_all_diff_vias()
+                pairs = car(plan)
+                dva_put_msg(sprintf(nil "\311\250\303\350\265\275 %d \270\366\271\375\277\327\243\254\306\344\326\320 %d \270\366\312\364\323\332\262\356\267\326\324\274\312\370\243\254\306\245\305\344\265\275 %d \327\351\243\254%d \270\366\262\356\267\326\271\375\277\327\316\264\305\344\266\324\241\243"
+                    nth(1 plan) nth(2 plan) length(pairs) nth(3 plan)))
+                if(!pairs then
+                    dva_ui_set_status("\316\264\325\322\265\275\277\311\305\344\266\324\265\304\262\356\267\326\271\375\277\327\243\254\307\353\274\354\262\351 DIFF_PAIR \324\274\312\370\272\315\262\356\267\326\266\324\271\375\277\327\274\344\276\340(Max)\241\243")
+                else
+                    approved = t
+                    when(_dva_confirm_before_apply
+                        approved = axlUIYesNo(sprintf(nil
+                            "\275\253\316\252 %d \327\351\262\356\267\326\271\375\277\327\311\372\263\311\267\264\272\270\305\314\243\254\267\305\326\303\262\343\243\272%s\241\243\316\264\305\344\266\324\271\375\277\327\243\272%d \270\366\241\243\312\307\267\361\274\314\320\370\243\277"
+                            length(pairs) dva_route_keepout_layer() nth(3 plan))
+                            "Moka skill - Anti-Pad" 'yes)
+                    )
+                    if(!approved then
+                        dva_ui_set_status("\322\321\310\241\317\373\305\372\301\277\264\246\300\355\243\254\316\264\320\336\270\304\267\264\272\270\305\314\241\243")
+                    else
+                        dva_ensure_property()
+                        _dva_mark = axlDBTransactionStart()
+                        if(!_dva_mark then
+                            dva_ui_set_status("\316\336\267\250\306\364\266\257\267\264\272\270\305\314\312\375\276\335\277\342\312\302\316\361\243\254\316\264\275\370\320\320\320\336\270\304\241\243")
+                        else
+                            result = dva_batch_apply_pairs(pairs)
+                            dva_ui_set_status(sprintf(nil "\305\372\301\277\275\341\271\373\243\272%d \327\351\322\321\311\372\263\311\273\362\314\346\273\273\243\254%d \327\351\322\321\323\320\311\350\326\303\262\242\314\370\271\375\243\254%d \327\351\312\247\260\334\241\243"
+                                car(result) cadr(result) caddr(result)))
+                            when(_dva_session_op_count > 0
+                                popup = axlUIPopupDefine(nil list(
+                                    list("Done" 'dva_cb_done)
+                                    list("Oops" 'dva_cb_oops)
+                                    list("Cancel" 'dva_cb_cancel)))
+                                axlUIPopupSet(popup)
+                                while(!_dva_finished
+                                    _dva_enter_wakeup = nil
+                                    point = axlEnterPoint(?prompts list(
+                                        "\267\264\272\270\305\314\322\321\305\372\301\277\311\372\263\311\243\272\274\354\262\351\272\363\323\322\274\374 Done \314\341\275\273\243\254Oops \263\267\317\372\322\273\327\351\243\254Cancel \273\330\271\366\325\373\305\372\241\243"))
+                                    when(!point && !_dva_finished && !_dva_enter_wakeup
+                                        dva_session_interrupted()
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            progn(
+                when(_dva_mark
+                    if(_dva_commit then
+                        axlDBTransactionCommit(_dva_mark)
+                        dva_ui_set_status(sprintf(nil "\305\372\301\277\264\246\300\355\322\321\314\341\275\273\243\254\271\262 %d \327\351\271\375\277\327\262\331\327\367\241\243"
+                            _dva_session_op_count))
+                    else
+                        axlDBTransactionRollback(_dva_mark)
+                        dva_ui_set_status("\305\372\301\277\262\331\327\367\322\321\273\330\271\366\243\254\316\264\314\341\275\273\261\276\305\372\264\316\320\336\270\304\241\243")
+                    )
+                )
+                _dva_mark = nil
+                _dva_enter_wakeup = nil
+                _dva_session_op_count = 0
+                _dva_run_active = nil
+                axlUIPopupSet(nil)
+                dva_ui_close_if_pending()
+            )
+        )
+    )
+)
+
+defun( dva_cmd_run ()
+    if(_dva_operation == "BATCH" then
+        dva_cmd_run_batch()
+    else
+        dva_cmd_run_selection()
+    )
+)
+
+defun( dva_cmd_all ()
+    let((layers)
+        dva_init_defaults()
+        layers = dva_board_layers()
+        when(!_dva_run_active && !member(_dva_layer cons("ALL" layers))
+            _dva_layer = car(layers)
+        )
+        dva_ui_start(nil "BATCH")
+    )
+)
+
+defun( dva_cmd_run_selection ()
+    let((popup selected selection_result)
+        _dva_run_active = t
+        _dva_finished = nil
+        _dva_commit = nil
+        _dva_enter_wakeup = nil
         _dva_session_op_count = 0
         axlClearSelSet()
         axlUIPopupSet(nil)
@@ -1568,7 +1829,9 @@ defun( dva_cmd_run ()
                     else
                         dva_put_msg("Select Via, Pin, component, Cline, Cline Seg, or Shape sources for the configured anti-pad mode.")
                     )
-                    if(axlSelect() && !_dva_finished then
+                    _dva_enter_wakeup = nil
+                    selection_result = axlSelect()
+                    if(selection_result && !_dva_finished then
                         selected = axlGetSelSet()
                         when(selected
                             if(_dva_operation == "REMOVE" then
@@ -1578,6 +1841,9 @@ defun( dva_cmd_run ()
                             )
                         )
                         axlClearSelSet()
+                    )
+                    when(!selection_result && !_dva_finished && !_dva_enter_wakeup
+                        dva_session_interrupted()
                     )
                 )
             )
@@ -1594,6 +1860,7 @@ defun( dva_cmd_run ()
                     )
                 )
                 _dva_mark = nil
+                _dva_enter_wakeup = nil
                 _dva_session_op_count = 0
                 _dva_run_active = nil
                 axlUIPopupSet(nil)
@@ -1613,7 +1880,7 @@ defun( dva_validate_params ()
             (_dva_layer != "ALL" && !member(_dva_layer layers) error_message = "The selected placement layer is invalid.")
             (_dva_clearance < 0.0 error_message = "Clearance cannot be negative.")
             (_dva_min_diameter < 0.0 error_message = "Minimum diameter cannot be negative.")
-            (_dva_target_mode == "DIFF_AUTO" && _dva_max_pair_distance <= 0.0 error_message = "Maximum pair distance must be greater than zero.")
+            (_dva_target_mode == "DIFF_AUTO" && _dva_max_pair_distance <= 0.0 error_message = "\262\356\267\326\266\324\271\375\277\327\274\344\276\340(Max)\261\330\320\353\264\363\323\332\301\343\241\243")
             (_dva_fixed_size && member(_dva_geometry_mode list("CIRCLE" "CAPSULE" "RECTANGLE")) && _dva_min_diameter <= 0.0
                 error_message = "Fixed size must be greater than zero."
             )
@@ -1622,6 +1889,13 @@ defun( dva_validate_params ()
             )
         )
         error_message
+    )
+)
+
+defun( dva_validate_batch_params ()
+    let((_dva_target_mode)
+        _dva_target_mode = "DIFF_AUTO"
+        dva_validate_params()
     )
 )
 
@@ -1682,7 +1956,8 @@ defun( dva_ui_store_params (form)
 )
 
 defun( dva_ui_update_editability (form)
-    errset(axlFormSetFieldEditable(form "pair_distance" _dva_target_mode == "DIFF_AUTO") nil)
+    ; Batch pairing always uses this limit, regardless of manual target mode.
+    errset(axlFormSetFieldEditable(form "pair_distance" t) nil)
     errset(axlFormSetFieldEditable(form "fixed_size" member(_dva_geometry_mode list("CIRCLE" "CAPSULE" "RECTANGLE"))) nil)
 )
 
@@ -1716,13 +1991,13 @@ defun( dva_ui_start (form operation)
         if(_dva_run_active then
             dva_ui_set_status("Finish or cancel the current selection session first.")
         else
-            dva_ui_store_params(form)
-            error_message = dva_validate_params()
+            when(form dva_ui_store_params(form))
+            error_message = if(operation == "BATCH" then dva_validate_batch_params() else dva_validate_params())
             if(error_message then
                 dva_ui_set_status(error_message)
             else
                 _dva_operation = operation
-                when(operation == "APPLY"
+                when(operation == "APPLY" || operation == "BATCH"
                     _dva_source_layer = nil
                     when(_dva_geometry_mode == "CONTOUR" || _dva_layer == "ALL"
                         _dva_source_layer = dva_contour_source_layer()
@@ -1763,6 +2038,7 @@ defun( dva_ui_form_cb (form)
                     errset(axlFormSetField(form "layer" _dva_layer) nil)
                 )
                 ("btn_apply" dva_ui_start(form "APPLY"))
+                ("btn_all_vias" dva_ui_start(form "BATCH"))
                 ("btn_remove" dva_ui_start(form "REMOVE"))
                 ("btn_finish"
                     if(_dva_run_active then dva_cb_done() else dva_ui_set_status("No selection session is active."))
@@ -1784,7 +2060,7 @@ defun( dva_write_form (form_file)
         port = outfile(form_file)
         when(port
             fprintf(port "FILE_TYPE=FORM_DEFN VERSION=2\n")
-            fprintf(port "FORM\nFIXED\nPORT 32 42\n")
+            fprintf(port "FORM\nFIXED\nPORT 34 45\n")
             fprintf(port "HEADER \"Moka skill v%s - Anti-Pad\"\n" _dva_version)
             fprintf(port "POPUP <TARGETMODE> \"Auto DP\" \"DIFF_AUTO\".\n")
             fprintf(port "POPUP <GEOMETRYMODE> \"Ellipse\" \"CAPSULE\".\n")
@@ -1804,13 +2080,14 @@ defun( dva_write_form (form_file)
             fprintf(port "FIELD clearance\nFLOC 17 23\nREALFILLIN 10 12\nDECIMAL 4\nENDFIELD\n")
             fprintf(port "TEXT \"\263\337\264\347\057\327\356\320\241\326\261\276\266\072\"\nTLOC 1 26\nENDTEXT\n")
             fprintf(port "FIELD min_diameter\nFLOC 17 26\nREALFILLIN 10 12\nDECIMAL 4\nENDFIELD\n")
-            fprintf(port "TEXT \"\327\356\264\363\305\344\266\324\276\340\300\353\072\"\nTLOC 1 29\nENDTEXT\n")
-            fprintf(port "FIELD pair_distance\nFLOC 17 29\nREALFILLIN 10 12\nDECIMAL 4\nENDFIELD\n")
+            fprintf(port "TEXT \"\262\356\267\326\266\324\271\375\277\327\274\344\276\340(Max)\072\"\nTLOC 1 29\nENDTEXT\n")
+            fprintf(port "FIELD pair_distance\nFLOC 21 29\nREALFILLIN 10 12\nDECIMAL 4\nENDFIELD\n")
             fprintf(port "FIELD btn_apply\nFLOC 1 32\nMENUBUTTON \"\321\241\324\361\262\242\323\246\323\303\" 13 3\nENDFIELD\n")
             fprintf(port "FIELD btn_remove\nFLOC 15 32\nMENUBUTTON \"\321\241\324\361\262\242\311\276\263\375\" 13 3\nENDFIELD\n")
-            fprintf(port "FIELD btn_finish\nFLOC 1 35\nMENUBUTTON \"\315\352\263\311\" 8 3\nENDFIELD\n")
-            fprintf(port "FIELD btn_cancel\nFLOC 11 35\nMENUBUTTON \"\310\241\317\373\262\331\327\367\" 17 3\nENDFIELD\n")
-            fprintf(port "FIELD btn_close\nFLOC 20 38\nMENUBUTTON \"\271\330\261\325\" 9 3\nENDFIELD\n")
+            fprintf(port "FIELD btn_all_vias\nFLOC 1 35\nMENUBUTTON \"\310\253\260\345\262\356\267\326\271\375\277\327\" 27 3\nENDFIELD\n")
+            fprintf(port "FIELD btn_finish\nFLOC 1 38\nMENUBUTTON \"\315\352\263\311\" 8 3\nENDFIELD\n")
+            fprintf(port "FIELD btn_cancel\nFLOC 11 38\nMENUBUTTON \"\310\241\317\373\262\331\327\367\" 17 3\nENDFIELD\n")
+            fprintf(port "FIELD btn_close\nFLOC 20 41\nMENUBUTTON \"\271\330\261\325\" 9 3\nENDFIELD\n")
             fprintf(port "ENDTILE\nENDFORM\n")
             close(port)
             ok = t
@@ -1906,7 +2183,11 @@ defun( dva_ui_open ()
                             when(point axlClearSelSet())
                             action = _dva_panel_action
                             _dva_panel_action = nil
-                            when(action dva_cmd_run())
+                            if(action then
+                                dva_cmd_run()
+                            else
+                                unless(point _dva_panel_active = nil)
+                            )
                         )
                         progn(
                             when(!_dva_ui_ministatus && form

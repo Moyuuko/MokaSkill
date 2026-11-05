@@ -29,6 +29,8 @@ internal static class MokaSkillConfig
         "alias mcopper moka_copper_corner",
         "alias mqc moka_quick_copper",
         "alias msi moka_stackup_impedance",
+        "alias mibom moka_ibom",
+        "alias mibomcfg moka_ibom_config",
         "alias mclean moka_clean_logs",
         "alias malleft moka_al_left",
         "alias al moka_al_left",
@@ -149,9 +151,10 @@ internal static class MokaSkillConfig
     private static void EnsureMokaEnv(string path, string installDir)
     {
         List<string> lines = ReadLines(path);
-        string bitmapPath = installDir.Replace('\\', '/').Replace("\"", "\\\"") +
-            "/mooretronics-symbols/icons";
         int oldLineCount = lines.Count;
+        // Legacy releases replaced BMPPATH with our icon directory.  That removes
+        // Allegro's own toolbar images.  The symbols panel now appends its path
+        // at runtime, after reading the complete existing search path.
         lines.RemoveAll(delegate(string line)
         {
             string value = line.Trim().Replace('\\', '/');
@@ -163,13 +166,6 @@ internal static class MokaSkillConfig
         foreach (string line in lines) normalized.Add(Normalize(line));
 
         bool changed = !File.Exists(path) || lines.Count != oldLineCount;
-        string bitmapPathLine = "set bmppath = \"" + bitmapPath + "\"";
-        if (!normalized.Contains(Normalize(bitmapPathLine)))
-        {
-            lines.Insert(0, bitmapPathLine);
-            normalized.Add(Normalize(bitmapPathLine));
-            changed = true;
-        }
         foreach (string required in MokaEnvLines)
         {
             if (required.StartsWith("#", StringComparison.Ordinal) || normalized.Contains(Normalize(required))) continue;
@@ -352,10 +348,8 @@ internal static class MokaSkillConfig
             if (mokaEnv.IndexOf("alias msymbols moka_symbols", StringComparison.Ordinal) < 0 ||
                 mokaEnv.IndexOf("alias mplace moka_symbols_place", StringComparison.Ordinal) < 0)
                 throw new Exception("Mooretronics Symbols Moka commands were not installed.");
-            string expectedBitmapPath = "set bmppath = \"" +
-                app.Replace('\\', '/') + "/mooretronics-symbols/icons\"";
-            if (mokaEnv.IndexOf(expectedBitmapPath, StringComparison.Ordinal) < 0)
-                throw new Exception("Mooretronics Symbols BMPPATH was not installed.");
+            if (mokaEnv.IndexOf("set bmppath", StringComparison.OrdinalIgnoreCase) >= 0)
+                throw new Exception("Moka environment must not replace Allegro's BMPPATH.");
             if (mokaEnv.IndexOf("set bitmappath", StringComparison.OrdinalIgnoreCase) >= 0)
                 throw new Exception("Obsolete BITMAPPATH configuration was not removed.");
 
