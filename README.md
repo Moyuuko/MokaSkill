@@ -30,7 +30,7 @@ MokaSkill 是 Allegro的 SKILL 工具。
 
 顶层菜单可以选择中文或英文，功能面板保持中文。
 
-交互式 BOM 已合并进 MokaSkill 主模块，并随 v1.3.0 安装器打包。它使用 Allegro SKILL 采集板数据，将 InteractiveHtmlBom v2.12.0 的中文界面和查看器内嵌到单个离线 HTML。运行时不需要安装 Python 或外部 InteractiveHtmlBom，也不生成中间 JSON 文件。从 Moka Skill 菜单或 `mokaskill` 主面板打开配置窗口并点击“导出”，即可保存配置并生成 HTML；也可使用 `moka_ibom` 直接导出或 `moka_ibom_config` 打开设置。设置会嵌入导出文件并优先于浏览器旧的 localStorage 配置。该功能尚未完成 Allegro 16.6/17.4 实板验证，数据采集和上游功能兼容性仍需测试。导出文件位于当前工程目录的 `ibom` 文件夹。
+交互式 BOM 已合并进 MokaSkill 主模块，并随 v1.3.0 安装器打包。它使用 Allegro SKILL 采集板数据，将 InteractiveHtmlBom v2.12.0 的中文界面和查看器内嵌到单个离线 HTML。从 Moka Skill 菜单或 `mokaskill` 主面板打开配置窗口并点击“导出”，即可保存配置并生成 HTML；也可使用 `moka_ibom` 直接导出或 `moka_ibom_config` 打开设置。导出文件位于当前工程目录的 `ibom` 文件夹。
 
 配置项及上游参数适配情况见 [Interactive BOM 配置说明](docs/interactive-bom-options.md)。配置面板中的版本号和公司名称会写入 HTML 元数据，填写后导出时不再弹出输入框。默认不导出 `COMPONENT VALUE/SILKSCREEN_TOP` 和 `COMPONENT VALUE/SILKSCREEN_BOTTOM`，不会影响 BOM 表格的 Value 列。
 
