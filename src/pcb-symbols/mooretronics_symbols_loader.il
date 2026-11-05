@@ -1,4 +1,4 @@
-/* Standalone compatibility loader for Moka skill - PCB 标识放置 v1.3.0. */
+/* Standalone compatibility loader for Moka skill - PCB 标识放置 v1.3.1. */
 
 defvar(_mts_menu_registered nil)
 

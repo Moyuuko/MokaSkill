@@ -1,5 +1,5 @@
 /*
-  Moka Skill Anti-Pad Module v1.3.0
+  Moka Skill Anti-Pad Module v1.3.1
 
   Commands:
     moka_dp_antipad      - open the anti-pad control panel
@@ -12,7 +12,7 @@
   conductive shapes while allowing clines and vias through the area.
 */
 
-_dva_version = "1.3.0"
+_dva_version = "1.3.1"
 _dva_prop_name = "MOKA_AP_KEEP_ID"
 _dva_legacy_prop_name = "MOKA_DP_AP_ID"
 _dva_defaults_initialized = nil

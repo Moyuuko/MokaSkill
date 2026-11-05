@@ -1,5 +1,5 @@
 /*
- * Moka skill - PCB 标识放置 v1.3.0
+ * Moka skill - PCB 标识放置 v1.3.1
  *
  * Places PCB marking glyphs generated from Mooretronics.ttf as ordinary
  * filled Allegro geometry.  Commands:
@@ -7,8 +7,8 @@
  *   moka_symbols_place - place the symbol using the current panel settings
  */
 
-defvar(_mts_version "1.3.0")
-_mts_version = "1.3.0"
+defvar(_mts_version "1.3.1")
+_mts_version = "1.3.1"
 defvar(_mts_install_dir "")
 defvar(_mts_form nil)
 defvar(_mts_symbol "p")

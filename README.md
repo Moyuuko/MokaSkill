@@ -1,6 +1,6 @@
-# MokaSkill v1.3.0
+# MokaSkill v1.3.1
 
-v1.3.0 新增集成式交互式 BOM，并包含 Anti-Pad 批量处理、切层交互、圆形过孔外扩及工具栏图标搜索路径修复。版本已发布，安装包及更新说明见 [GitHub Releases](https://github.com/Moyuuko/MokaSkill/releases/tag/v1.3.0)。
+v1.3.1 新增层设置独立 `DRC ALL` 控制，并包含集成式交互式 BOM、Anti-Pad 批量处理、切层交互、圆形过孔外扩及工具栏图标搜索路径修复。安装包和更新说明见 [GitHub Releases](https://github.com/Moyuuko/MokaSkill/releases/tag/v1.3.1)。
 
 v1.1 已测试通过。Anti-Pad 的“放置层”新增 `All`，在 `ROUTE KEEPOUT/ALL` 创建全层生效的图形；读取 Via/Pin 轮廓时使用开始选择时的活动 ETCH 层，若无活动 ETCH 层则使用叠层中的首个 ETCH 层。
 
@@ -30,7 +30,9 @@ MokaSkill 是 Allegro的 SKILL 工具。
 
 顶层菜单可以选择中文或英文，功能面板保持中文。
 
-交互式 BOM 已合并进 MokaSkill 主模块，并随 v1.3.0 安装器打包。它使用 Allegro SKILL 采集板数据，将 InteractiveHtmlBom v2.12.0 的中文界面和查看器内嵌到单个离线 HTML。从 Moka Skill 菜单或 `mokaskill` 主面板打开配置窗口并点击“导出”，即可保存配置并生成 HTML；也可使用 `moka_ibom` 直接导出或 `moka_ibom_config` 打开设置。导出文件位于当前工程目录的 `ibom` 文件夹。
+层设置中的 `DRC` 控制当前 ETCH 层的 `DRC ERROR CLASS/<层>`；单独的 `DRC ALL` 控制 `DRC ERROR CLASS/ALL`，用于显示等长、相位及其他全局约束 DRC。两者互不联动，旧配置升级后 `DRC ALL` 默认开启。
+
+交互式 BOM 已合并进 MokaSkill 主模块，并随 v1.3.1 安装器打包。它使用 Allegro SKILL 采集板数据，将 InteractiveHtmlBom v2.12.0 的中文界面和查看器内嵌到单个离线 HTML。运行时不需要安装 Python 或外部 InteractiveHtmlBom，也不生成中间 JSON 文件。从 Moka Skill 菜单或 `mokaskill` 主面板打开配置窗口并点击“导出”，即可保存配置并生成 HTML；也可使用 `moka_ibom` 直接导出或 `moka_ibom_config` 打开设置。设置会嵌入导出文件并优先于浏览器旧的 localStorage 配置。该功能尚未完成 Allegro 16.6/17.4 实板验证，数据采集和上游功能兼容性仍需测试。导出文件位于当前工程目录的 `ibom` 文件夹。
 
 配置项及上游参数适配情况见 [Interactive BOM 配置说明](docs/interactive-bom-options.md)。配置面板中的版本号和公司名称会写入 HTML 元数据，填写后导出时不再弹出输入框。默认不导出 `COMPONENT VALUE/SILKSCREEN_TOP` 和 `COMPONENT VALUE/SILKSCREEN_BOTTOM`，不会影响 BOM 表格的 Value 列。
 
@@ -139,7 +141,7 @@ docs/demos/                  功能演示 GIF/视频（后续补充）
 2. 编译 `installer/MokaSkillConfig.cs`，生成配置助手并执行自检。
 3. 自检验证重复安装幂等性、用户 `pcbenv` 配置保留、快捷键配置和卸载回滚。
 4. 调用 Inno Setup `ISCC.exe` 编译 `installer/MokaSkillSetup.iss`。
-5. 安装器输出到 `dist/MokaSkill_Setup_v1.3.0.exe`，包含交互式 BOM 查看器及许可证文件，并提供现代向导、语言选择、卸载入口和静默配置步骤。
+5. 安装器输出到 `dist/MokaSkill_Setup_v1.3.1.exe`，包含交互式 BOM 查看器及许可证文件，并提供现代向导、语言选择、卸载入口和静默配置步骤。
 
 本地构建命令：
 
@@ -179,4 +181,4 @@ README 的功能表会作为演示索引；添加 GIF 后，在对应行补充�
 
 ## 版本
 
-当前版本：**v1.3.0**。安装程序与更新说明见 [GitHub Releases](https://github.com/Moyuuko/MokaSkill/releases)。
+当前版本：**v1.3.1**。安装程序与更新说明见 [GitHub Releases](https://github.com/Moyuuko/MokaSkill/releases/tag/v1.3.1)。

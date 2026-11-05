@@ -1,6 +1,6 @@
 ; ==============================================================================
 ; Script Name: moka_core.il
-; Description: Moka skill v1.3.0 (routing helpers, stackup, impedance and analysis tools)
+; Description: Moka skill v1.3.1 (routing helpers, stackup, impedance and analysis tools)
 ; Modifications: Version 1.0 - Add Anti Etch layer visibility settings
 ; ==============================================================================
 
@@ -10,6 +10,8 @@ defvar(moka_install_dir axlGetVariable("MOKA_INSTALL_DIR") || "D:/Moka_Skill")
 defvar(moka_layer_table nil)
 defvar(moka_display_mode "SINGLE") 
 defvar(_moka_view_updating nil)
+; DRC ERROR CLASS/ALL is independent from each ETCH-layer DRC subclass.
+defvar(moka_drc_all t)
 defvar(moka_c1_class "")
 defvar(moka_c1_sub "")
 defvar(moka_c2_class "")
@@ -193,6 +195,7 @@ defun( moka_load_config_ini ()
                         ("c1_sub" moka_c1_sub = val)
                         ("c2_class" moka_c2_class = val)
                         ("c2_sub" moka_c2_sub = val)
+                        ("drc_all" moka_drc_all = equal(val "1"))
                         ("LAYER"
                             layer_data = parseString(val "|")
                             if(length(layer_data) >= 18 then
@@ -229,6 +232,7 @@ defun( moka_save_config_ini ()
             fprintf(port "c1_sub=%s\n" moka_safe_str(moka_c1_sub))
             fprintf(port "c2_class=%s\n" moka_safe_str(moka_c2_class))
             fprintf(port "c2_sub=%s\n" moka_safe_str(moka_c2_sub))
+            fprintf(port "drc_all=%d\n" if(moka_drc_all then 1 else 0))
             fprintf(port "\n[LAYER_SETTINGS]\n")
             
             foreach(row moka_layer_table
@@ -495,6 +499,9 @@ defun( moka_toggle_single_all_impl ()
                         if(pin   then axlVisibleLayer(strcat("PIN/" ln) t))
                         if(via   then axlVisibleLayer(strcat("VIA CLASS/" ln) t))
                         if(drc   then axlVisibleLayer(strcat("DRC ERROR CLASS/" ln) t))
+                        if(moka_drc_all && axlIsLayer("DRC ERROR CLASS/ALL") then
+                            axlVisibleLayer("DRC ERROR CLASS/ALL" t)
+                        )
                         
                         if(mst  then 
                             axlVisibleLayer("BOARD GEOMETRY/SOLDERMASK_TOP" t)
@@ -593,6 +600,9 @@ defun( moka_apply_view_impl (cfg)
         if(pin   then axlVisibleLayer(strcat("PIN/" ln) t))
         if(via   then axlVisibleLayer(strcat("VIA CLASS/" ln) t))
         if(drc   then axlVisibleLayer(strcat("DRC ERROR CLASS/" ln) t))
+        if(moka_drc_all && axlIsLayer("DRC ERROR CLASS/ALL") then
+            axlVisibleLayer("DRC ERROR CLASS/ALL" t)
+        )
         
         if(mst  then 
             axlVisibleLayer("BOARD GEOMETRY/SOLDERMASK_TOP" t)
@@ -682,7 +692,7 @@ defun( moka_create_form_file ()
             if(form_h < 30 then form_h = 30)
             
             fprintf(port "FILE_TYPE=FORM_DEFN VERSION=2\n")
-            fprintf(port "FORM\nFIXED\nPORT 130 %d\nHEADER \"Moka skill v1.3.0 - \262\343\311\350\326\303\"\n" form_h)
+            fprintf(port "FORM\nFIXED\nPORT 130 %d\nHEADER \"Moka skill v1.3.1 - \262\343\311\350\326\303\"\n" form_h)
             fprintf(port "POPUP <C1CLASSPOP> \"(None)\" \"\".\n")
             fprintf(port "POPUP <C1SUBPOP> \"(None)\" \"\".\n")
             fprintf(port "POPUP <C2CLASSPOP> \"(None)\" \"\".\n")
@@ -694,6 +704,7 @@ defun( moka_create_form_file ()
             fprintf(port "TEXT \"Pin\"\nTLOC 18 2\nENDTEXT\n")
             fprintf(port "TEXT \"Via\"\nTLOC 23 2\nENDTEXT\n")
             fprintf(port "TEXT \"DRC\"\nTLOC 28 2\nENDTEXT\n")
+            fprintf(port "TEXT \"DRC ALL\"\nTLOC 106 2\nENDTEXT\n")
             fprintf(port "TEXT \"MsT\"\nTLOC 33 2\nENDTEXT\n")
             fprintf(port "TEXT \"MsB\"\nTLOC 38 2\nENDTEXT\n")
             fprintf(port "TEXT \"SlkT\"\nTLOC 43 2\nENDTEXT\n")
@@ -739,6 +750,7 @@ defun( moka_create_form_file ()
             fprintf(port "FIELD all_pin\nFLOC 18 %d\nCOLOR 2 1\nENDFIELD\n" y)
             fprintf(port "FIELD all_via\nFLOC 23 %d\nCOLOR 2 1\nENDFIELD\n" y)
             fprintf(port "FIELD all_drc\nFLOC 28 %d\nCOLOR 2 1\nENDFIELD\n" y)
+            fprintf(port "FIELD drc_all\nFLOC 106 %d\nCOLOR 2 1\nENDFIELD\n" y)
             fprintf(port "FIELD all_mst\nFLOC 33 %d\nCOLOR 2 1\nENDFIELD\n" y)
             fprintf(port "FIELD all_msb\nFLOC 38 %d\nCOLOR 2 1\nENDFIELD\n" y)
             fprintf(port "FIELD all_slkt\nFLOC 43 %d\nCOLOR 2 1\nENDFIELD\n" y)
@@ -1333,7 +1345,7 @@ defun( moka_refdes_create_form_file ()
         if(port then
             fprintf(port "FILE_TYPE=FORM_DEFN VERSION=2\n")
             fprintf(port "FORM\nFIXED\nPORT 32 32\n")
-            fprintf(port "HEADER \"Moka skill v1.3.0 - \316\273\272\305\271\244\276\337\"\n")
+            fprintf(port "HEADER \"Moka skill v1.3.1 - \316\273\272\305\271\244\276\337\"\n")
             fprintf(port "TILE\n")
             fprintf(port "GROUP \"\317\324\312\276\311\350\326\303\"\nGLOC 1 1\nGSIZE 29 11\nENDGROUP\n")
             fprintf(port "FIELD show_top\nFLOC 2 3\nMENUBUTTON \"\317\324\312\276\266\245\262\343\" 12 3\nENDFIELD\n")
@@ -1507,6 +1519,7 @@ defun( moka_cmd_ui ()
                         )
                     )
                 )
+                errset(axlFormSetField(form "drc_all" moka_drc_all) nil)
                 
                 axlFormDisplay(form)  
                 deleteFile(formFile)
@@ -1546,6 +1559,11 @@ defun( moka_form_cb (form)
         ("btn_refdes" axlShellPost("moka_refdes"))
 
         ("btn_ibom" axlShellPost("moka_ibom_config"))
+
+        ("drc_all"
+            moka_drc_all = if(axlFormGetField(form "drc_all") then t else nil)
+            errset(axlFormSetField(form "drc_all" moka_drc_all) nil)
+        )
         
         (t
             let((all_fields base_name field_name idx ln prefixes col_idx old_state new_state row)
@@ -1727,7 +1745,7 @@ defun( moka_cmd_get_status ()
 
         axlMsgPut("-------------------------------------------------")
         ; 设计状态数据:
-        axlMsgPut("Moka Skill v1.3.0 \311\350\274\306\327\264\314\254\312\375\276\335:")
+        axlMsgPut("Moka Skill v1.3.1 \311\350\274\306\327\264\314\254\312\375\276\335:")
         ; 总管脚数
         axlMsgPut("\327\334\271\334\275\305\312\375            : %d" pin_count)
         ; 剩余未连接飞线数
@@ -1737,7 +1755,7 @@ defun( moka_cmd_get_status ()
         axlMsgPut("-------------------------------------------------")
 
         ; PCB 设计状态: 总管脚数: 剩余飞线数: 今日总耗时:
-        axlUIConfirm(sprintf(nil "Moka Skill v1.3.0 PCB \311\350\274\306\327\264\314\254:\n\n> \327\334\271\334\275\305\312\375: %d\n> \312\243\323\340\267\311\317\337\312\375: %d\n> \275\361\310\325\327\334\272\304\312\261: %s" pin_count rats_count time_str))
+        axlUIConfirm(sprintf(nil "Moka Skill v1.3.1 PCB \311\350\274\306\327\264\314\254:\n\n> \327\334\271\334\275\305\312\375: %d\n> \312\243\323\340\267\311\317\337\312\375: %d\n> \275\361\310\325\327\334\272\304\312\261: %s" pin_count rats_count time_str))
     )
 )
 
@@ -1756,7 +1774,7 @@ defun( Create_TA_Main_Form ()
         fprintf(outPort "FIXED\n")
         fprintf(outPort "PORT 48 30\n") 
         ; 走线分析器
-        fprintf(outPort "HEADER \"Moka skill v1.3.0 - \327\337\317\337\267\326\316\366\306\367\"\n")
+        fprintf(outPort "HEADER \"Moka skill v1.3.1 - \327\337\317\337\267\326\316\366\306\367\"\n")
         fprintf(outPort "TILE\n")
     
         ; 控制面板
@@ -1831,7 +1849,7 @@ defun( Create_TA_Palette_Form ()
         fprintf(outPort "FIXED\n")
         fprintf(outPort "PORT 70 20\n") 
         ; 调色板
-        fprintf(outPort "HEADER \"Moka skill v1.3.0 - \265\367\311\253\260\345\"\n")
+        fprintf(outPort "HEADER \"Moka skill v1.3.1 - \265\367\311\253\260\345\"\n")
   
         fprintf(outPort "TILE\n")
         
