@@ -32,10 +32,9 @@ MokaSkill 是 Allegro的 SKILL 工具。
 
 层设置中的 `DRC` 控制当前 ETCH 层的 `DRC ERROR CLASS/<层>`；单独的 `DRC ALL` 控制 `DRC ERROR CLASS/ALL`，用于显示等长、相位及其他全局约束 DRC。两者互不联动，旧配置升级后 `DRC ALL` 默认开启，开关颜色跟随该全局 DRC 子类的颜色。
 
-交互式 BOM 已合并进 MokaSkill 主模块，并随 v1.3.1 安装器打包。它使用 Allegro SKILL 采集板数据，将 InteractiveHtmlBom v2.12.0 的中文界面和查看器内嵌到单个离线 HTML。运行时不需要安装 Python 或外部 InteractiveHtmlBom，也不生成中间 JSON 文件。从 Moka Skill 菜单或 `mokaskill` 主面板打开配置窗口并点击“导出”，即可保存配置并生成 HTML；也可使用 `moka_ibom` 直接导出或 `moka_ibom_config` 打开设置。设置会嵌入导出文件并优先于浏览器旧的 localStorage 配置。该功能尚未完成 Allegro 16.6/17.4 实板验证，数据采集和上游功能兼容性仍需测试。导出文件位于当前工程目录的 `ibom` 文件夹。
+交互式 BOM 已合并进 MokaSkill 主模块，并随 v1.3.1 安装器打包。它使用 Allegro SKILL 采集板数据，将 InteractiveHtmlBom v2.12.0 的中文界面和查看器内嵌到单个离线 HTML。运行时不需要安装 Python 或外部 InteractiveHtmlBom，也不生成中间 JSON 文件。从 Moka Skill 菜单或 `mokaskill` 主面板打开配置窗口并点击“导出”，即可保存配置并生成 HTML；也可使用 `moka_ibom` 直接导出或 `moka_ibom_config` 打开设置。设置会嵌入导出文件并优先于浏览器旧的 localStorage 配置。导出文件位于当前工程目录的 `ibom` 文件夹。
 
-配置项及上游参数适配情况见 [Interactive BOM 配置说明](docs/interactive-bom-options.md)。配置面板中的版本号和公司名称会写入 HTML 元数据，填写后导出时不再弹出输入框。默认不导出 `COMPONENT VALUE/SILKSCREEN_TOP` 和 `COMPONENT VALUE/SILKSCREEN_BOTTOM`，不会影响 BOM 表格的 Value 列。
-
+配置项及上游参数适配情况见 [Interactive BOM 配置说明](docs/interactive-bom-options.md)。
 ## 全部功能命令与快捷键
 
 以下配置以安装程序生成的 `moka.env` 为准。完整命令和短别名在 Allegro 命令行输入后按回车执行；`F11`、`F12` 和 `funckey` 在画布获得焦点时直接触发。字母绑定在配置中使用大写，例如 `funckey D` 对应 `Shift+D`；表中同时列出配置字符，便于核对。`—` 表示没有默认绑定，可在 Allegro 的 Aliases/Function Keys 中自行设置。
